@@ -6,7 +6,7 @@ export default function IndexPage() {
       {/* <HeroDescription /> */}
       <section
         id="video-conversion"
-        className="container grid items-center gap-6 pb-8 pt-6 md:py-10"
+        className="container grid items-center justify-center gap-6 pb-8 pt-6 md:py-10"
       >
         <FFmpegComponent />
         {/* <AIComponent /> */}

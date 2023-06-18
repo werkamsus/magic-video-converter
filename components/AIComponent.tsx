@@ -33,7 +33,6 @@ export default function AIComponent({
     onFinish: (res, completion) => {
       console.log(res)
       console.log(completion)
-      toast.success("AI generated text")
       if (onComplete) {
         onComplete(completion)
       }
@@ -55,10 +54,11 @@ export default function AIComponent({
     async (c: string) => {
       const completion = await complete(
         // a precise prompt is important for the AI to reply with the correct tokens
-        `Input file: ${inputFileName}, user request: ${c}
+        `Input file: '${inputFileName}', user request: ${c}
 Output:\n`
       )
       if (!completion) throw new Error("Failed to check typos")
+      return completion
     },
     [complete, inputFileName]
   )
@@ -67,15 +67,26 @@ Output:\n`
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        inputFileTransform(input)
+        const transformPromise = inputFileTransform(input)
+        toast.promise(transformPromise, {
+          loading: "Using AI to generate FFMPEG command...",
+          success: (data) => {
+            const aiResponseWithoutFFmpeg = data.replaceAll("ffmpeg ", "")
+            const aiOutputJson = JSON.parse(aiResponseWithoutFFmpeg)
+            const output = aiOutputSchema.parse(aiOutputJson)
+
+            return `Command: ${output.command}\n\nOutput type: ${output.output_type}`
+          },
+          error: (error) =>
+            `Something went wrong. Please try our examples, or try again. Might be AI randomness.`,
+        })
       }}
     >
       <Input
         value={input}
-        placeholder="Convert to mp3"
+        placeholder="'Convert to mp3', 'trim first 10 seconds'"
         onChange={handleInputChange}
       />
-      <p>Completion result: {completion}</p>
     </form>
   )
 }

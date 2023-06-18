@@ -3,5 +3,5 @@
 import { Toaster } from "sonner"
 
 export default function ToasterComponent() {
-  return <Toaster />
+  return <Toaster position="top-center" />
 }

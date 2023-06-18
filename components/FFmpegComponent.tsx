@@ -21,6 +21,12 @@ export default function FFmpegComponent() {
   const [inputFile, setInputFile] = useState<File>()
   const [outputFile, setOutputFile] = useState<string>()
   const [ffmpegCommand, setFFmpegCommand] = useState<string>("")
+  const [progress, setProgress] = useState<number>(0)
+
+  ffmpeg.setProgress(({ ratio }) => {
+    console.log(`Complete: ${ratio}`)
+    setProgress(ratio)
+  })
 
   const [aiCommandInput, setAiCommandInput] = useState<string>("")
 
@@ -48,7 +54,11 @@ export default function FFmpegComponent() {
 
       setInputFile(file)
       toast(
-        `File selected!, Filetype, size: ${file.type} | ${file.size} | ${file.name}`
+        <div>
+          <p className="font-bold">File selected</p>
+          <p>Enter your command below.</p>
+          {/* {file.type} / {file.name}` */}
+        </div>
       )
     }
   }
@@ -65,7 +75,6 @@ export default function FFmpegComponent() {
     //get input extension
     const inputExtension = inputFile.name.split(".").pop()
     ffmpeg.FS("writeFile", `${inputFile.name}`, await fetchFile(inputFile))
-    toast(`writing ${inputFile.name} to fs`)
     console.log(inputFile.name)
     console.log(ffmpegCommand)
 
@@ -99,39 +108,64 @@ export default function FFmpegComponent() {
 
     const outputWithoutFFmpeg = {}
     setFFmpegCommand(output.command)
-    toast(`Success, CMD: ${output.command}, type: ${output.output_type}`)
+    // toast(`Success, CMD: ${output.command}, type: ${output.output_type}`)
   }
 
   return (
-    <div className="flex max-w-[600px] flex-col gap-2">
+    <div className="flex flex-col gap-2 transition-all">
       {/* <Toaster /> */}
       {ready ? (
-        <p>Ready!</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-2">
+            <p>1. Choose file</p>
+            <p>{"2. Tell AI how you'd like to convert it"}</p>
+            <p>3. Download result</p>
+            <Input type="file" onChange={handleFileChange} />
+            <AIComponent
+              inputFileName={inputFile?.name || ""}
+              onComplete={handleAICallback}
+            />
+            <Input
+              type="text"
+              placeholder="AI will generate this"
+              disabled
+              value={ffmpegCommand}
+              onChange={(e) => setFFmpegCommand(e.target.value)}
+            />
+            <Button
+              disabled={!inputFile || !ffmpegCommand}
+              onClick={() => {
+                const mediaPromise = convertMedia()
+                toast.promise(mediaPromise, {
+                  loading: `Converting... ${progress}`,
+                  success: `Successfully converted! Download the file below.`,
+                  error: "Error converting",
+                })
+              }}
+            >
+              Convert
+            </Button>
+          </div>
+          <div>
+            {inputFile && (
+              <div>
+                <p>Input file</p>
+                <video
+                  controls
+                  width="250"
+                  src={URL.createObjectURL(inputFile)}
+                />
+              </div>
+            )}
+          </div>
+          {outputFile && <video controls width="250" src={outputFile} />}
+        </div>
       ) : (
         <p>
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading...
+          Loading FFMPEG...
         </p>
       )}
-
-      <Input type="file" onChange={handleFileChange} />
-      <Input
-        type="text"
-        placeholder="ffmpeg command in"
-        value={ffmpegCommand}
-        onChange={(e) => setFFmpegCommand(e.target.value)}
-      />
-
-      <AIComponent
-        inputFileName={inputFile?.name || ""}
-        onComplete={handleAICallback}
-      />
-
-      <Button onClick={convertMedia}>Convert</Button>
-      {inputFile && (
-        <video controls width="250" src={URL.createObjectURL(inputFile)} />
-      )}
-      {outputFile && <video controls width="250" src={outputFile} />}
     </div>
   )
 }
