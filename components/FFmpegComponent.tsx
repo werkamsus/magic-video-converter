@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useState } from "react"
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg"
-import { Loader2 } from "lucide-react"
+import { Loader2, SaveIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import AIComponent, { aiOutputSchema } from "./AIComponent"
@@ -63,12 +63,11 @@ export default function FFmpegComponent() {
     }
   }
 
-  const handleCommandChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    setFFmpegCommand(e.target.value)
-  }
-
-  const convertMedia = async (): Promise<void> => {
-    if (!inputFile || !ffmpegCommand) return
+  const convertMedia = async (ffmpegCommand: string): Promise<void> => {
+    if (!inputFile || !ffmpegCommand) {
+      toast.error("No input file or command")
+      return
+    }
 
     ffmpeg.isLoaded() || (await ffmpeg.load())
 
@@ -97,7 +96,7 @@ export default function FFmpegComponent() {
   }
 
   function handleAICallback(aiResponse: string) {
-    console.log(aiResponse)
+    // console.log(aiResponse)
     // console.log(JSON.parse(aiResponse))
 
     const aiResponseWithoutFFmpeg = aiResponse.replaceAll("ffmpeg ", "")
@@ -106,59 +105,124 @@ export default function FFmpegComponent() {
 
     //replace ffmpeg and first space with empty if exists
 
-    const outputWithoutFFmpeg = {}
     setFFmpegCommand(output.command)
+
+    triggerConversion(output.command)
+    // triggerConversion()
     // toast(`Success, CMD: ${output.command}, type: ${output.output_type}`)
+  }
+
+  function triggerConversion(ffmpegCommand: string) {
+    const mediaPromise = convertMedia(ffmpegCommand)
+    toast.promise(mediaPromise, {
+      loading: `Converting...`,
+      success: `Successfully converted! Download the file below.`,
+      error: "Error converting",
+    })
+  }
+  const handleFileDownload = (downloadFile: string) => {
+    // Create an anchor element
+    const link = document.createElement("a")
+    link.href = downloadFile
+
+    // The download attribute. You can choose the name of the file.
+    link.download = "output"
+
+    // This triggers the download
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  function resetUI() {
+    setInputFile(undefined)
+    setAiCommandInput("")
+    setOutputFile(undefined)
+    setFFmpegCommand("")
+    setProgress(0)
+    setAiCommandInput("")
   }
 
   return (
     <div className="flex flex-col gap-2 transition-all">
       {/* <Toaster /> */}
       {ready ? (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 grid-cols-1 gap-4">
           <div className="flex flex-col gap-2">
-            <p>1. Choose file</p>
-            <p>{"2. Tell AI how you'd like to convert it"}</p>
-            <p>3. Download result</p>
+            <div className="font-bold">
+              <p>1. Choose file</p>
+              <p>{"2. Tell AI how you'd like to convert it"}</p>
+              <p>3. Download result</p>
+            </div>
             <Input type="file" onChange={handleFileChange} />
             <AIComponent
               inputFileName={inputFile?.name || ""}
               onComplete={handleAICallback}
             />
-            <Input
+
+            {/* {outputFile && <Button>Download file</Button>} */}
+            {/* <Input
               type="text"
               placeholder="AI will generate this"
               disabled
               value={ffmpegCommand}
               onChange={(e) => setFFmpegCommand(e.target.value)}
-            />
-            <Button
-              disabled={!inputFile || !ffmpegCommand}
-              onClick={() => {
-                const mediaPromise = convertMedia()
-                toast.promise(mediaPromise, {
-                  loading: `Converting... ${progress}`,
-                  success: `Successfully converted! Download the file below.`,
-                  error: "Error converting",
-                })
-              }}
-            >
-              Convert
-            </Button>
+            /> */}
+            {/* {inputFile && ffmpegCommand && (
+              <Button
+                onClick={() => {
+                  triggerConversion
+                }}
+              >
+                Convert file
+              </Button>
+            )} */}
           </div>
           <div>
-            {inputFile && (
-              <div>
-                <p>Input file</p>
-                <video
-                  controls
-                  width="250"
-                  src={URL.createObjectURL(inputFile)}
-                />
-              </div>
-            )}
+            <div>
+              {inputFile && !outputFile && (
+                <div>
+                  <p className="mb-2 font-bold">Input file</p>
+                  <video
+                    className="max-h-48 rounded-lg border"
+                    controls
+                    width={250}
+                    src={URL.createObjectURL(inputFile)}
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              {outputFile && (
+                <div className="flex flex-col gap-2">
+                  <p className="mb-2 font-bold">Output</p>
+                  {/* implement this */}
+
+                  <video
+                    className="max-h-48 rounded-lg border"
+                    controls
+                    width="250"
+                    src={outputFile}
+                  />
+                  <Button
+                    className=""
+                    onClick={() => handleFileDownload(outputFile)}
+                  >
+                    <SaveIcon className="h-4 w-4 -ml-4 mr-2" /> Save file
+                  </Button>
+                  <p className="font-bold">Command used:</p>
+                  <pre className="bg-gray-100 p-2 rounded-lg whitespace-pre-wrap">
+                    {ffmpegCommand}
+                  </pre>
+                  {outputFile && (
+                    <Button variant="outline" onClick={resetUI}>
+                      Convert another file
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-          {outputFile && <video controls width="250" src={outputFile} />}
         </div>
       ) : (
         <p>

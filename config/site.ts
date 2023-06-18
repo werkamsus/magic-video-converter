@@ -10,8 +10,9 @@ export const siteConfig = {
       href: "/",
     },
   ],
-  links: {
+  externalLinks: {
     twitter: "https://twitter.com/raziborsky",
     github: "https://github.com/werkamsus",
+    linkedin: "https://www.linkedin.com/in/nick-raziborsky/",
   },
 }

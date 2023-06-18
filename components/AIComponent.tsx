@@ -5,6 +5,7 @@ import { useCompletion } from "ai/react"
 import { toast } from "sonner"
 import { z } from "zod"
 
+import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 
 export const aiOutputSchema = z.object({
@@ -65,6 +66,7 @@ Output:\n`
 
   return (
     <form
+      className="flex flex-col gap-2"
       onSubmit={(e) => {
         e.preventDefault()
         const transformPromise = inputFileTransform(input)
@@ -87,6 +89,19 @@ Output:\n`
         placeholder="'Convert to mp3', 'trim first 10 seconds'"
         onChange={handleInputChange}
       />
+      {isLoading && (
+        <Button disabled type="button">
+          Generating...
+        </Button>
+      )}
+      {!isLoading &&
+        (completion ? (
+          <Button variant="outline" disabled={!input}>
+            Re-run conversion
+          </Button>
+        ) : (
+          <Button disabled={!input}>Convert file</Button>
+        ))}
     </form>
   )
 }
