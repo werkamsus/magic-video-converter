@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useEffect, useState } from "react"
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg"
-import { Loader2, SaveIcon } from "lucide-react"
+import { Loader2, Save } from "lucide-react"
 import { toast } from "sonner"
 
 import AIComponent, { aiOutputSchema } from "./AIComponent"
@@ -208,7 +208,7 @@ export default function FFmpegComponent() {
                     className=""
                     onClick={() => handleFileDownload(outputFile)}
                   >
-                    <SaveIcon className="h-4 w-4 -ml-4 mr-2" /> Save file
+                    <Save className="h-4 w-4 -ml-4 mr-2" /> Save file
                   </Button>
                   <p className="font-bold">Command used:</p>
                   <pre className="bg-gray-100 p-2 rounded-lg whitespace-pre-wrap">
