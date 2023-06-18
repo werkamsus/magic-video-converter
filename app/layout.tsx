@@ -8,6 +8,8 @@ import { SiteHeader } from "@/components/site-header"
 import { TailwindIndicator } from "@/components/tailwind-indicator"
 import { ThemeProvider } from "@/components/theme-provider"
 
+import ToasterComponent from "../components/ToastComponent"
+
 export const metadata: Metadata = {
   title: {
     default: siteConfig.name,
@@ -34,6 +36,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <>
       <html lang="en" suppressHydrationWarning>
         <head />
+
         <body
           className={cn(
             "min-h-screen bg-background font-sans antialiased",
@@ -41,6 +44,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           )}
         >
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <ToasterComponent />
             <div className="relative flex min-h-screen flex-col">
               <SiteHeader />
               <div className="flex-1">{children}</div>

@@ -21,6 +21,10 @@ what do I need?
 3. pretty UI
 4. done
 
+---
+### Ideal flow:
+Full-screen empty state "1. select your file, 2. tell us how you'd like to modify it, 3. save file"
+
 
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 

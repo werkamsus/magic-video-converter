@@ -1,10 +1,11 @@
 "use client"
 
 import { ChangeEvent, useEffect, useState } from "react"
-import Image from "next/image"
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
+import AIComponent, { aiOutputSchema } from "./AIComponent"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 
@@ -12,11 +13,16 @@ const ffmpeg = createFFmpeg({
   log: true,
   mainName: "main",
   corePath: "https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js",
+  progress: (p) => console.log(p.ratio),
 })
+
 export default function FFmpegComponent() {
-  const [ready, setReady] = useState(false)
-  const [video, setVideo] = useState<File>()
-  const [gif, setGif] = useState<string>()
+  const [ready, setReady] = useState<boolean>(false)
+  const [inputFile, setInputFile] = useState<File>()
+  const [outputFile, setOutputFile] = useState<string>()
+  const [ffmpegCommand, setFFmpegCommand] = useState<string>("")
+
+  const [aiCommandInput, setAiCommandInput] = useState<string>("")
 
   const load = async () => {
     if (!ffmpeg.isLoaded()) {
@@ -31,52 +37,74 @@ export default function FFmpegComponent() {
     load()
   }, [])
 
-  const handleVideoChange = (e: ChangeEvent<HTMLInputElement>): void => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
     if (e.target.files) {
-      const videoFile = e.target.files.item(0)
-
-      if (!videoFile) {
-        console.error("No video file")
+      const file = e.target.files.item(0)
+      if (!file) {
+        console.error("No file selected")
         return
       }
-      setVideo(videoFile)
+      //always rename to "input.{extension}"
+
+      setInputFile(file)
+      toast(
+        `File selected!, Filetype, size: ${file.type} | ${file.size} | ${file.name}`
+      )
     }
   }
 
-  const convertToGif = async (): Promise<void> => {
-    if (!video) return
+  const handleCommandChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setFFmpegCommand(e.target.value)
+  }
+
+  const convertMedia = async (): Promise<void> => {
+    if (!inputFile || !ffmpegCommand) return
 
     ffmpeg.isLoaded() || (await ffmpeg.load())
-    ffmpeg.FS("writeFile", "test.mp4", await fetchFile(video))
 
-    //detect uploaded file.
-    const splitArgs = "-i test.mp4 -ss 5 -t 5 -acodec libmp3lame output".split(
-      " "
-    )
+    //get input extension
+    const inputExtension = inputFile.name.split(".").pop()
+    ffmpeg.FS("writeFile", `${inputFile.name}`, await fetchFile(inputFile))
+    toast(`writing ${inputFile.name} to fs`)
+    console.log(inputFile.name)
+    console.log(ffmpegCommand)
+
+    // // Extract output file extension
+    const commandSplit = ffmpegCommand.split(" ")
+    const outputFile = commandSplit[commandSplit.length - 1] // Assuming output file is always the last argument
+    const outputFileExtension = outputFile.split(".").pop()
+
+    const splitArgs = ffmpegCommand.split(" ")
+
     await ffmpeg.run(...splitArgs)
 
-    // await ffmpeg.run(
-    //   "-i",
-    //   "test.mp4",
-    //   "-t",
-    //   "2.5",
-    //   "-ss",
-    //   "2.0",
-    //   "-f",
-    //   "gif",
-    //   "out.gif"
-    // )
+    const data = ffmpeg.FS("readFile", outputFile)
 
-    const data = ffmpeg.FS("readFile", "output")
-
-    
-    const url = URL.createObjectURL(
-      new Blob([data.buffer], { type: "audio/mp3" })
-    )
-    setGif(url)
+    const blob = new Blob([data.buffer], {
+      type: `audio/${outputFileExtension}`,
+    }) // Assuming it's a video output. Change according to your needs
+    const url = URL.createObjectURL(blob)
+    setOutputFile(url)
   }
+
+  function handleAICallback(aiResponse: string) {
+    console.log(aiResponse)
+    // console.log(JSON.parse(aiResponse))
+
+    const aiResponseWithoutFFmpeg = aiResponse.replaceAll("ffmpeg ", "")
+    const aiOutputJson = JSON.parse(aiResponseWithoutFFmpeg)
+    const output = aiOutputSchema.parse(aiOutputJson)
+
+    //replace ffmpeg and first space with empty if exists
+
+    const outputWithoutFFmpeg = {}
+    setFFmpegCommand(output.command)
+    toast(`Success, CMD: ${output.command}, type: ${output.output_type}`)
+  }
+
   return (
     <div className="flex max-w-[600px] flex-col gap-2">
+      {/* <Toaster /> */}
       {ready ? (
         <p>Ready!</p>
       ) : (
@@ -85,12 +113,25 @@ export default function FFmpegComponent() {
           Loading...
         </p>
       )}
-      <Input type="file" onChange={handleVideoChange} />
 
-      <Button onClick={convertToGif}>Convert to gif</Button>
-      {video && <video controls width="250" src={URL.createObjectURL(video)} />}
-      {gif && <Image src={gif} width={200} height={200} alt="Converted GIF" />}
-      {video && <video controls width="250" src={gif} />}
+      <Input type="file" onChange={handleFileChange} />
+      <Input
+        type="text"
+        placeholder="ffmpeg command in"
+        value={ffmpegCommand}
+        onChange={(e) => setFFmpegCommand(e.target.value)}
+      />
+
+      <AIComponent
+        inputFileName={inputFile?.name || ""}
+        onComplete={handleAICallback}
+      />
+
+      <Button onClick={convertMedia}>Convert</Button>
+      {inputFile && (
+        <video controls width="250" src={URL.createObjectURL(inputFile)} />
+      )}
+      {outputFile && <video controls width="250" src={outputFile} />}
     </div>
   )
 }
