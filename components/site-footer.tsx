@@ -16,10 +16,16 @@ export function SiteFooter() {
               <Link className="hidden hover:underline sm:inline" href={"/"}>
                 Home
               </Link>
-              <Link className="hover:underline" href={"/legal/legal-notice"}>
+              <Link
+                className="hover:underline"
+                href={"https://waveformer.pro/legal/legal-notice"}
+              >
                 Legal Notice
               </Link>
-              <Link className="hover:underline" href={"/legal/privacy-policy"}>
+              <Link
+                className="hover:underline"
+                href={"https://waveformer.pro/legal/privacy-policy"}
+              >
                 Privacy Policy
               </Link>
             </div>
@@ -38,6 +44,21 @@ export function SiteFooter() {
                 >
                   <Icons.twitter className="h-5 w-5 fill-current" />
                   <span className="sr-only">Twitter</span>
+                </div>
+              </Link>
+              <Link
+                href={siteConfig.externalLinks.githubProject}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <div
+                  className={buttonVariants({
+                    size: "sm",
+                    variant: "ghost",
+                  })}
+                >
+                  <Icons.gitHub className="h-4 w-4 fill-current" />
+                  <span className="sr-only">LinkedIn</span>
                 </div>
               </Link>
               <Link

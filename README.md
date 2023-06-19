@@ -1,5 +1,7 @@
 ## Magic video converter 🦎
 
+### My initial notes
+
 I’d like to convert videos to different formats from time to time. Would be amazing to just have an App I could select & then tell GPT what I want to do.
 
 “rotate my video 90 degrees clockwise”

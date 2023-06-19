@@ -13,6 +13,7 @@ export const siteConfig = {
   externalLinks: {
     twitter: "https://twitter.com/raziborsky",
     github: "https://github.com/werkamsus",
+    githubProject: "https://github.com/werkamsus/magic-video-converter",
     linkedin: "https://www.linkedin.com/in/nick-raziborsky/",
   },
 }
